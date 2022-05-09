@@ -6,17 +6,55 @@
 /*   By: ccambium <ccambium@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2022/03/31 00:38:32 by ccambium          #+#    #+#             */
-/*   Updated: 2022/04/02 06:15:02 by ccambium         ###   ########.fr       */
+/*   Updated: 2022/05/09 17:03:54 by ccambium         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "minitalk.h"
 
-void	signal_handler(int sig)
+char	*g_s;
+
+void	reset_print(void)
+{
+	ft_printf("%s", g_s);
+	free(g_s);
+	g_s = NULL;
+}
+
+void	add_char(char c)
+{
+	int		x;
+	char	*new_s;
+
+	if (c == 0)
+	{
+		reset_print();
+		return ;
+	}
+	if (g_s == NULL)
+	{
+		g_s = malloc(sizeof(char) * 2);
+		g_s[0] = c;
+		g_s[1] = 0;
+		return ;
+	}
+	x = ft_strlen(g_s);
+	new_s = malloc(sizeof(char) * x + 2);
+	if (new_s == NULL)
+		return ;
+	ft_strlcpy(new_s, g_s, x + 1);
+	new_s[x] = c;
+	new_s[x + 1] = 0;
+	free(g_s);
+	g_s = new_s;
+}
+
+void	signal_handler(int sig, siginfo_t *siginfo, void *something)
 {
 	static int	i = 0;
 	static char	c = 0;
 
+	(void) something;
 	if (sig == SIGUSR1)
 		c |= (1 << i);
 	else if (sig == SIGUSR2)
@@ -24,37 +62,35 @@ void	signal_handler(int sig)
 	i++;
 	if (i == 8)
 	{
-		write(1, &c, 1);
+		add_char(c);
 		i = 0;
 		c = 0;
 	}
+	kill(siginfo->si_pid, SIGUSR1);
 }
 
-int	server(void)
+void	ft_end(int sigid)
 {
-	int		i;
-
-	while (1)
-	{
-		i = 0;
-		while (i < 8)
-		{
-			if (signal(SIGUSR1, signal_handler) == SIG_ERR)
-				return (0);
-			if (signal(SIGUSR2, signal_handler) == SIG_ERR)
-				return (0);
-			i++;
-		}
-	}
-	return (1);
+	(void)sigid;
+	if (g_s != NULL)
+		free(g_s);
+	exit(EXIT_SUCCESS);
 }
 
 int	main(void)
 {
-	int		pid;
+	int					pid;
+	struct sigaction	sa;
 
+	g_s = NULL;
 	pid = getpid();
-	ft_printf("%d\n", pid);
-	server();
-	return (1);
+	ft_printf("%u\n", pid);
+	sa.sa_flags = SA_SIGINFO;
+	sigemptyset(&sa.sa_mask);
+	sa.sa_sigaction = signal_handler;
+	sigaction(SIGUSR1, &sa, NULL);
+	sigaction(SIGUSR2, &sa, NULL);
+
+	while (1)
+		;
 }
