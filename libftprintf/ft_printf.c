@@ -6,7 +6,7 @@
 /*   By: marvin <marvin@student.42.fr>              +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2021/10/07 18:46:07 by marvin            #+#    #+#             */
-/*   Updated: 2021/10/07 18:46:07 by marvin           ###   ########.fr       */
+/*   Updated: 2022/05/09 17:20:09 by ccambium         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,9 @@
 int	ft_strlen(char *str)
 {
 	int	i;
-
+	
+	if (str == NULL)
+	       return (0);	
 	i = 0;
 	while (str[i] != 0)
 		i++;
